@@ -119,6 +119,7 @@ const char *Triple::getOSTypeName(OSType Kind) {
   case RTEMS: return "rtems";
   case NativeClient: return "nacl";
   case CNK: return "cnk";
+  case Emscripten: return "emscripten";
   }
 
   llvm_unreachable("Invalid OSType");
@@ -288,6 +289,7 @@ static Triple::OSType parseOS(StringRef OSName) {
     .StartsWith("rtems", Triple::RTEMS)
     .StartsWith("nacl", Triple::NativeClient)
     .StartsWith("cnk", Triple::CNK)
+    .StartsWith("emscripten", Triple::Emscripten)
     .Default(Triple::UnknownOS);
 }
 
