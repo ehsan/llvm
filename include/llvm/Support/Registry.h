@@ -17,6 +17,7 @@
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/DynamicLibrary.h"
 #include <memory>
 
 namespace llvm {
@@ -114,6 +115,32 @@ namespace llvm {
       Add(const char *Name, const char *Desc)
         : Entry(Name, Desc, CtorFn), Node(Entry) {}
     };
+
+    /// A dynamic import facility.  This is used on Windows to
+    /// import the entries added in the plugin.
+    static void import(sys::DynamicLibrary &DL, const char *RegistryName) {
+      typedef void *(*GetRegistry)();
+      std::string Name("LLVMGetRegistry_");
+      Name.append(RegistryName);
+      GetRegistry Getter = reinterpret_cast<GetRegistry>
+          (DL.getAddressOfSymbol(Name.c_str()));
+      if (Getter) {
+        typedef std::pair<const node *, const node *> Info;
+        Info *I = static_cast<Info *> (Getter());
+        iterator begin(I->first);
+        iterator end(I->second);
+        for (; begin != end; ++begin) {
+          node(*begin);
+        }
+      }
+    }
+
+    /// Retrieve the data to be passed across DLL boundaries when
+    /// importing registries from another DLL on Windows.
+    static void *exportRegistry() {
+      static std::pair<const node *, const node *> Info(Head, Tail);
+      return &Info;
+    }
   };
 
   
@@ -125,5 +152,14 @@ namespace llvm {
   template <typename T>
   typename Registry<T>::node *Registry<T>::Tail;
 } // end namespace llvm
+
+#ifdef _MSC_VER
+#define LLVM_EXPORT_REGISTRY(REGISTRY_CLASS) \
+  __declspec(dllexport) void * __cdecl LLVMGetRegistry_ ## REGISTRY_CLASS() { \
+    return REGISTRY_CLASS::exportRegistry(); \
+  }
+#define LLVM_IMPORT_REGISTRY(REGISTRY_CLASS, DL) \
+  REGISTRY_CLASS::import(DL, #REGISTRY_CLASS)
+#endif
 
 #endif // LLVM_SUPPORT_REGISTRY_H
