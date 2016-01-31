@@ -60,19 +60,22 @@ namespace llvm {
     ///
     class node {
       friend class iterator;
+      friend Registry<T>;
 
       node *Next;
       const entry& Val;
 
     public:
-      node(const entry& V) : Next(nullptr), Val(V) {
-        if (Tail)
-          Tail->Next = this;
-        else
-          Head = this;
-        Tail = this;
-      }
+      node(const entry& V) : Next(nullptr), Val(V) {}
     };
+
+    static void add_node(node *N) {
+      if (Tail)
+        Tail->Next = N;
+      else
+        Head = N;
+      Tail = N;
+    }
 
     /// Iterators for registry entries.
     ///
@@ -113,7 +116,9 @@ namespace llvm {
 
     public:
       Add(const char *Name, const char *Desc)
-        : Entry(Name, Desc, CtorFn), Node(Entry) {}
+        : Entry(Name, Desc, CtorFn), Node(Entry) {
+        add_node(&Node);
+      }
     };
 
     /// A dynamic import facility.  This is used on Windows to
@@ -129,8 +134,10 @@ namespace llvm {
         Info *I = static_cast<Info *> (Getter());
         iterator begin(I->first);
         iterator end(I->second);
-        for (; begin != end; ++begin) {
-          node(*begin);
+        for (++end; begin != end; ++begin) {
+	  // This Node object needs to remain alive for the
+	  // duration of the program.
+	  add_node(new node(*begin));
         }
       }
     }
@@ -155,8 +162,10 @@ namespace llvm {
 
 #ifdef _MSC_VER
 #define LLVM_EXPORT_REGISTRY(REGISTRY_CLASS) \
-  __declspec(dllexport) void * __cdecl LLVMGetRegistry_ ## REGISTRY_CLASS() { \
-    return REGISTRY_CLASS::exportRegistry(); \
+  extern "C" { \
+    __declspec(dllexport) void * __cdecl LLVMGetRegistry_ ## REGISTRY_CLASS() { \
+      return REGISTRY_CLASS::exportRegistry(); \
+    } \
   }
 #define LLVM_IMPORT_REGISTRY(REGISTRY_CLASS, DL) \
   REGISTRY_CLASS::import(DL, #REGISTRY_CLASS)
