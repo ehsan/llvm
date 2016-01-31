@@ -80,7 +80,7 @@ static void VisitComponent(const std::string &Name,
                            const std::function<std::string(const StringRef &)>
                                *GetComponentLibraryPath,
                            std::vector<std::string> *Missing,
-			   const std::string &DirSep) {
+                           const std::string &DirSep) {
   // Lookup the component.
   AvailableComponent *AC = ComponentMap.lookup(Name);
   assert(AC && "Invalid component name!");
@@ -226,7 +226,7 @@ std::string GetExecutablePath(const char *Argv0) {
 /// the full list of components.
 std::vector<std::string> GetAllDyLibComponents(const bool IsInDevelopmentTree,
                                                const bool GetComponentNames,
-					       const std::string &DirSep) {
+                                               const std::string &DirSep) {
   std::vector<StringRef> DyLibComponents;
 
   StringRef DyLibComponentsStr(LLVM_DYLIB_COMPONENTS);
