@@ -1,5 +1,8 @@
 set(system_libs)
-if( NOT MSVC )
+if( MSVC )
+  # libuuid required for FOLDERID_Profile usage in lib/Support/Windows/Path.inc.
+  set(system_libs ${system_libs} psapi shell32 ole32 uuid)
+else()
   if( MINGW )
     # libuuid required for FOLDERID_Profile usage in lib/Support/Windows/Path.inc.
     set(system_libs ${system_libs} psapi shell32 ole32 uuid)
@@ -26,7 +29,7 @@ if( NOT MSVC )
     endif()
     set(system_libs ${system_libs} m)
   endif( MINGW )
-endif( NOT MSVC )
+endif( MSVC )
 
 add_llvm_library(LLVMSupport
   APFloat.cpp
