@@ -492,7 +492,8 @@ int main(int argc, char **argv) {
       } else if (Arg == "--cxxflags") {
         OS << ActiveIncludeOption << ' ' << LLVM_CXXFLAGS << '\n';
       } else if (Arg == "--ldflags") {
-        OS << "-L" << ActiveLibDir << ' ' << LLVM_LDFLAGS << '\n';
+        OS << ((HostTriple.isWindowsMSVCEnvironment()) ? "-LIBPATH:" : "-L")
+           << ActiveLibDir << ' ' << LLVM_LDFLAGS << '\n';
       } else if (Arg == "--system-libs") {
         PrintSystemLibs = true;
       } else if (Arg == "--libs") {

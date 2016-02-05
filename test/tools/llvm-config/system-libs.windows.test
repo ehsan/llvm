@@ -1,5 +1,6 @@
 RUN: llvm-config --system-libs 2>&1 | FileCheck %s
-UNSUPPORTED: system-windows
-CHECK: -l
+REQUIRED: system-windows
+CHECK-NOT: -l
+CHECK: psapi.lib shell32.lib ole32.lib uuid.lib
 CHECK-NOT: error
 CHECK-NOT: warning
